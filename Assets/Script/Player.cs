@@ -188,8 +188,6 @@ public class Player : MonoBehaviour
             }
             else if(can_punch_flag==true)
             {
-                can_punch_flag = false;
-
                 if (transform.localScale.x >= 1)
                 {
                     rb2d.velocity = new Vector2(punch_force, 0);
@@ -202,6 +200,7 @@ public class Player : MonoBehaviour
                 {
                     punch_count = 0;
                     punch_flag = false;
+                    can_punch_flag = false;
                 }
             }
         }
