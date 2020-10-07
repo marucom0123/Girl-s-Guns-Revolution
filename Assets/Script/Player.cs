@@ -10,6 +10,8 @@ public class Player : MonoBehaviour
     [SerializeField] float jump_force;//ジャンプ力
     [SerializeField] int shot_delay;//ショットの間隔
     [SerializeField] float punch_force;//パンチ力
+    [SerializeField] int magazine_size;//マガジンの弾薬数
+    [SerializeField] float reload_time;//リロード時間
     [SerializeField] GameObject dust;//Dustのアニメーション
 
     private int shot_count = 0;//ショット回数
@@ -30,6 +32,9 @@ public class Player : MonoBehaviour
     private bool punch_flag = false;//パンチするか
     private float punch_count;//パンチのカウント
     private bool can_punch_flag = true;//パンチできるか
+    [SerializeField] private int bullet_count;//打った弾の数
+    private float reload_count;//リロード経過時間
+    private bool reload_flag = false;//リロードしているか
     private bool jump_dust_flag = true;//アニメーションを一回再生させるために使う
     private bool double_jump_dust_flag = true;
     private float dust_count;
@@ -48,7 +53,7 @@ public class Player : MonoBehaviour
         anim = GetComponent<Animator>();//Animatorコンポーネント取得
         groundCheck = GameObject.Find("GroundCheck").GetComponent<GroundCheck>();//GroundCheckコンポーネント取得
         playerBulletPool = GameObject.Find("PlayerBulletPool").GetComponent<PlayerBulletPool>();//PlayerBulletPoolスクリプトを取得
-
+        bullet_count = magazine_size;
     }
 
     // Update is called once per frame
@@ -115,7 +120,7 @@ public class Player : MonoBehaviour
     {
         if (is_wall == true)//壁に張り付いている際
         {
-            rb2d.velocity = new Vector2(key_x * Time.deltaTime * 8000 , -80);
+            rb2d.velocity = new Vector2(key_x * Time.deltaTime * 8000, -80);
         }
         else
         {
@@ -150,7 +155,7 @@ public class Player : MonoBehaviour
                 is_double_jump = true;
             }
 
-            if (is_ground == true && is_wall==false)//ジャンプ
+            if (is_ground == true && is_wall == false)//ジャンプ
             {
                 rb2d.velocity = new Vector2(rb2d.velocity.x, jump_force);
                 can_double_jump_flag = true;
@@ -166,11 +171,11 @@ public class Player : MonoBehaviour
             jump_flag = false;
         }
 
-        if (punch_flag == true && shot_key == false && guard_key == false)//パンチ
+        if (punch_flag == true)//パンチ
         {
             punch_count += Time.deltaTime;
 
-            if (is_ground == true)
+            if (is_ground == true && shot_key == false && guard_key == false)
             {
                 if (transform.localScale.x >= 1)
                 {
@@ -186,7 +191,7 @@ public class Player : MonoBehaviour
                     punch_flag = false;
                 }
             }
-            else if(can_punch_flag==true)
+            else if (can_punch_flag == true && shot_key == false && guard_key == false)
             {
                 if (transform.localScale.x >= 1)
                 {
@@ -210,22 +215,41 @@ public class Player : MonoBehaviour
     {
         shot_count++;
 
-        if (shot_key == true && guard_key == false && is_wall == false) 
+        if (reload_flag == true)//リロード処理
         {
-            if (shot_count >= shot_delay)
+            reload_count += Time.deltaTime;
+            if (reload_count > reload_time)
             {
-                shot_count = 0;
-                GameObject shot = playerBulletPool.GetObject();
-                if (transform.localScale.x <= -1)
+                reload_count = 0;
+                bullet_count = magazine_size;
+                reload_flag = false;
+            }
+        }
+
+        if (bullet_count == 0)
+        {
+            reload_flag = true;
+        }
+        else
+        {
+            if (shot_key == true && guard_key == false && is_wall == false && bullet_count > 0)
+            {
+                if (shot_count >= shot_delay)
                 {
-                    shot.GetComponent<PlayerBullet>().speed *= -1;
-                    shot.transform.position = new Vector2(transform.position.x - 40, transform.position.y);
-                    rb2d.AddForce(new Vector2(200, 0), ForceMode2D.Impulse);
-                }
-                else
-                {
-                    shot.transform.position = new Vector2(transform.position.x + 40, transform.position.y);
-                    rb2d.AddForce(new Vector2(-200, 0), ForceMode2D.Impulse);
+                    shot_count = 0;
+                    bullet_count--;
+                    GameObject shot = playerBulletPool.GetObject();
+                    if (transform.localScale.x <= -1)
+                    {
+                        shot.GetComponent<PlayerBullet>().speed *= -1;
+                        shot.transform.position = new Vector2(transform.position.x - 40, transform.position.y);
+                        rb2d.AddForce(new Vector2(200, 0), ForceMode2D.Impulse);
+                    }
+                    else
+                    {
+                        shot.transform.position = new Vector2(transform.position.x + 40, transform.position.y);
+                        rb2d.AddForce(new Vector2(-200, 0), ForceMode2D.Impulse);
+                    }
                 }
             }
         }
@@ -334,7 +358,7 @@ public class Player : MonoBehaviour
         }
 
         //ショット
-        if (shot_key == true && guard_key == false && is_wall == false)
+        if (shot_key == true && guard_key == false && is_wall == false && punch_flag == false && bullet_count > 0)
         {
             anim.SetBool("Shot", true);
             dust_count += Time.deltaTime;
@@ -347,7 +371,7 @@ public class Player : MonoBehaviour
                 {
                     effect.transform.position = new Vector2(transform.position.x - 40, transform.position.y + 10);
                 }
-                else if (transform.localScale.x<= -1 && is_ground == true && key_x==0)
+                else if (transform.localScale.x <= -1 && is_ground == true && key_x == 0)
                 {
                     effect.transform.position = new Vector2(transform.position.x + 40, transform.position.y + 10);
                     effect.transform.localScale = new Vector3(-1.4f, 1.4f, 1);
@@ -376,11 +400,11 @@ public class Player : MonoBehaviour
         }
         else
         {
-            anim.SetBool("Wall",false);
+            anim.SetBool("Wall", false);
         }
 
         //パンチ
-        if (punch_flag == true && shot_key == false && guard_key == false)
+        if (punch_flag == true && is_ground == true && shot_key == false && guard_key == false)
         {
             anim.SetBool("Punch", true);
         }
@@ -389,7 +413,7 @@ public class Player : MonoBehaviour
             anim.SetBool("Punch", false);
         }
 
-        if(punch_flag==true && can_jump_flag == true && can_double_jump_flag == true)
+        if (punch_flag == true && can_punch_flag == true && shot_key == false && guard_key == false)
         {
             anim.SetBool("Punch", true);
         }

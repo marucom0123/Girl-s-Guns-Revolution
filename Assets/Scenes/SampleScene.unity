@@ -613,7 +613,7 @@ Camera:
   far clip plane: 5000
   field of view: 40
   orthographic: 1
-  orthographic size: 240
+  orthographic size: 10
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -637,7 +637,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1, y: 48, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1229,7 +1229,10 @@ MonoBehaviour:
   jump_force: 500
   shot_delay: 3
   punch_force: 800
+  magazine_size: 20
+  reload_time: 2
   dust: {fileID: 7661833237996469783, guid: acb1265167207b9458b70337773704f1, type: 3}
+  bullet_count: 20
 --- !u!1 &1299583765
 GameObject:
   m_ObjectHideFlags: 0
